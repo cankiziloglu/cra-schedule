@@ -1,26 +1,222 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import * as React from "react";
+import styled, { createGlobalStyle } from "styled-components";
+// import * as ReactDOM from 'react-dom'
+import ScheduleSelector from "./lib/ScheduleSelector";
+import { SelectionSchemeType } from "./lib/selection-schemes";
+import Box from "./docs/Box";
+import * as Form from "./docs/Form";
+import * as Text from "./docs/Text";
+import colors from "./lib/colors";
 
-function App() {
+const GlobalStyle = createGlobalStyle`
+  body {
+    font-family: sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+`;
+
+const MainDiv = styled.div`
+  padding-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const IntroText = styled.div`
+  width: 100%;
+  text-align: center;
+  margin-bottom: 10px;
+`;
+
+const ScheduleSelectorCard = styled.div`
+  border-radius: 25px;
+  box-shadow: 10px 2px 30px rgba(0, 0, 0, 0.15);
+  padding: 20px;
+  width: 90%;
+  max-width: 800px;
+  & > * {
+    flex-grow: 1;
+  }
+`;
+
+const CustomizationRow = styled.div`
+  display: flex;
+  & > * {
+    margin: 8px;
+  }
+`;
+
+const Links = styled.div`
+  display: flex;
+  margin-top: 20px;
+`;
+
+const ExternalLink = styled.a`
+  background-color: ${(props) => props.color};
+  color: white;
+  padding: 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  text-decoration: none;
+  margin: 5px;
+`;
+
+const App = () => {
+  const [schedule, setSchedule] = React.useState<Array<Date>>([]);
+  const [selectionScheme, setSelectionScheme] =
+    React.useState<SelectionSchemeType>("linear");
+  const [startDate, setStartDate] = React.useState<Date>(new Date());
+  const [numDays, setNumDays] = React.useState<number>(7);
+  const [hourlyChunks, setHourlyChunks] = React.useState<number>(2);
+  const [minTime, setMinTime] = React.useState<number>(12);
+  const [maxTime, setMaxTime] = React.useState<number>(17);
+  const [selectedColor, setSelectedColor] = React.useState<string>("blue");
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <MainDiv>
+      <GlobalStyle />
+      <IntroText>
+        <Text.PageHeader>React Schedule Selector</Text.PageHeader>
+        <Text.Body2>
+          Tap to select one time or drag to select multiple times at once.
+        </Text.Body2>
+      </IntroText>
+      <Text.SectionHeader>Customizable Props</Text.SectionHeader>
+      <CustomizationRow>
+        <Box>
+          <Form.Label>Selection scheme</Form.Label>
+          <Form.Select
+            width="100%"
+            value={selectionScheme}
+            onChange={(event: any) => {
+              if (
+                event.target.value === "linear" ||
+                event.target.value === "square"
+              ) {
+                setSelectionScheme(event.target.value);
+              }
+            }}
+          >
+            <option value="linear">Linear</option>
+            <option value="square">Square</option>
+          </Form.Select>
+        </Box>
+
+        <Box>
+          <Form.Label>Selection color</Form.Label>
+          <Form.Select
+            width="100%"
+            value={selectedColor}
+            onChange={(event: any) => {
+              if (event.target.value === "blue") setSelectedColor(colors.blue);
+              else if (event.target.value === "orange")
+                setSelectedColor(colors.orange);
+            }}
+          >
+            <option value="blue">Blue</option>
+            <option value="orange">Orange</option>
+          </Form.Select>
+        </Box>
+
+        <Box>
+          <Form.Label>Start date</Form.Label>
+          <Form.Input
+            type="date"
+            value={startDate.toISOString().substr(0, 10)}
+            onChange={(event: any) => {
+              const date = new Date(event.target.value);
+              const tzOffset = date.getTimezoneOffset();
+              setStartDate(new Date(+date + tzOffset * 60000));
+            }}
+          />
+        </Box>
+
+        <Box>
+          <Form.Label>Num days</Form.Label>
+          <Form.Input
+            type="number"
+            min="1"
+            max="14"
+            value={numDays}
+            onChange={(event: any) => setNumDays(Number(event.target.value))}
+          />
+        </Box>
+
+        <Box>
+          <Form.Label>Min Time</Form.Label>
+          <Form.Input
+            type="number"
+            min="0"
+            max={maxTime - 1}
+            value={minTime}
+            onChange={(event: any) => setMinTime(Number(event.target.value))}
+          />
+        </Box>
+        <Box>
+          <Form.Label>Max Time</Form.Label>
+          <Form.Input
+            type="number"
+            min={minTime + 1}
+            max="24"
+            value={maxTime}
+            onChange={(event: any) => setMaxTime(Number(event.target.value))}
+          />
+        </Box>
+        <Box>
+          <Form.Label>Hourly chunks</Form.Label>
+          <Form.Input
+            type="number"
+            min="1"
+            max="6"
+            value={hourlyChunks}
+            onChange={(event: any) =>
+              setHourlyChunks(Number(event.target.value))
+            }
+          />
+        </Box>
+      </CustomizationRow>
+      <ScheduleSelectorCard>
+        <ScheduleSelector
+          minTime={minTime}
+          maxTime={maxTime}
+          numDays={numDays}
+          startDate={new Date(startDate)}
+          selection={schedule}
+          onChange={setSchedule}
+          hourlyChunks={hourlyChunks}
+          timeFormat="h:mma"
+          selectionScheme={selectionScheme}
+          selectedColor={selectedColor}
+        />
+      </ScheduleSelectorCard>
+      <Links>
+        <ExternalLink
+          color="#24292e"
+          href="https://github.com/bibekg/react-schedule-selector"
         >
-          Learn React
-        </a>
-      </header>
-    </div>
+          GitHub
+        </ExternalLink>
+        <ExternalLink
+          color="#cb3838"
+          href="https://npmjs.com/package/react-schedule-selector"
+        >
+          NPM
+        </ExternalLink>
+        <ExternalLink
+          color="#292929"
+          href="https://medium.com/@bibekg/react-schedule-selector-6cd5bf1f4968"
+        >
+          Medium
+        </ExternalLink>
+      </Links>
+    </MainDiv>
   );
-}
+};
 
 export default App;
+
+// ReactDOM.render(<App />, document.getElementById('app'))
